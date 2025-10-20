@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Bluetooth, RefreshCw, Settings, Info } from 'lucide-react';
 import { useSensorStore } from '@/store/useSensorStore';
 import { ConnectionStatus } from '@/types/sensor';
-import { telegram } from '@/lib/telegram';
+import { telegram } from './lib/telegram';
 import { THBLEDevice } from '@/lib/ble-api';
 
 // Компоненты
@@ -26,11 +26,15 @@ function App() {
     logs,
     isLoading,
     error,
+    transportType,
+    gatewayUrl,
     connectToSensor,
     disconnectSensor,
     refreshData,
     clearHistory,
-    setError
+    setError,
+    setTransportType,
+    setGatewayUrl
   } = useSensorStore();
 
   const [activeTab, setActiveTab] = useState<TabType>('monitor');
@@ -45,11 +49,11 @@ function App() {
       telegram.hapticFeedback('light');
     }
 
-    // Проверка поддержки Web Bluetooth
-    if (!THBLEDevice.isSupported()) {
-      setError('Web Bluetooth API не поддерживается в этом браузере. Используйте Chrome на Android.');
+    // Проверка поддержки Web Bluetooth (только для BLE транспорта)
+    if (transportType === 'ble' && !THBLEDevice.isSupported()) {
+      setError('Web Bluetooth API недоступен в этом окружении. Переключитесь на режим "Шлюз" в настройках или откройте во внешнем Chrome на Android.');
     }
-  }, [setError]);
+  }, [setError, transportType]);
 
   const handleConnect = async () => {
     try {
@@ -65,7 +69,7 @@ function App() {
   };
 
   const handleDisconnect = async () => {
-    telegram.showConfirm('Отключиться от датчика?', async (confirmed) => {
+    telegram.showConfirm('Отключиться от датчика?', async (confirmed: boolean) => {
       if (confirmed) {
         telegram.hapticFeedback('medium');
         await disconnectSensor();
@@ -85,7 +89,7 @@ function App() {
   };
 
   const handleClearHistory = () => {
-    telegram.showConfirm('Очистить историю данных?', (confirmed) => {
+    telegram.showConfirm('Очистить историю данных?', (confirmed: boolean) => {
       if (confirmed) {
         clearHistory();
         telegram.hapticFeedback('success');
@@ -112,6 +116,41 @@ function App() {
             <Settings className="w-6 h-6 text-telegram-text" />
           </button>
         </div>
+        {showSettings && (
+          <div className="mt-4 card">
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-telegram-hint mb-1">Режим подключения</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setTransportType('ble')}
+                    className={`px-3 py-2 rounded-lg font-semibold ${transportType === 'ble' ? 'bg-telegram-button text-telegram-button-text' : 'bg-telegram-secondary-bg text-telegram-text'}`}
+                  >
+                    Прямой (BLE)
+                  </button>
+                  <button
+                    onClick={() => setTransportType('gateway')}
+                    className={`px-3 py-2 rounded-lg font-semibold ${transportType === 'gateway' ? 'bg-telegram-button text-telegram-button-text' : 'bg-telegram-secondary-bg text-telegram-text'}`}
+                  >
+                    Шлюз (WebSocket)
+                  </button>
+                </div>
+              </div>
+              {transportType === 'gateway' && (
+                <div>
+                  <p className="text-sm text-telegram-hint mb-1">URL шлюза</p>
+                  <input
+                    value={gatewayUrl}
+                    onChange={(e) => setGatewayUrl(e.target.value)}
+                    placeholder="wss://host/ws"
+                    className="w-full px-3 py-2 rounded-lg bg-telegram-secondary-bg text-telegram-text outline-none"
+                  />
+                  <p className="text-xs text-telegram-hint mt-1">Шлюз позволяет работать из Telegram на iOS/вебе. Установите URL вашего BLE-шлюза.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Ошибка */}
@@ -119,12 +158,20 @@ function App() {
         <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
           <p className="text-red-600 dark:text-red-400 font-semibold">Ошибка</p>
           <p className="text-red-500 dark:text-red-300 text-sm mt-1">{error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="mt-2 text-sm text-red-600 dark:text-red-400 underline"
-          >
-            Закрыть
-          </button>
+          <div className="mt-3 flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={() => telegram.openLink('https://www.google.com/chrome/')}
+              className="btn-secondary"
+            >
+              Открыть в Chrome
+            </button>
+            <button
+              onClick={() => setError(null)}
+              className="text-sm text-red-600 dark:text-red-400 underline"
+            >
+              Закрыть
+            </button>
+          </div>
         </div>
       )}
 

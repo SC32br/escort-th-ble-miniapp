@@ -5,7 +5,9 @@
 
 import { create } from 'zustand';
 import { SensorData, SensorInfo, ConnectionStatus, ActionLog } from '@/types/sensor';
-import { bleDevice } from '@/lib/ble-api';
+import { SensorTransport, TransportType } from '@/types/transport';
+import { BleTransport } from '@/lib/transport-ble';
+import { GatewayTransport } from '@/lib/transport-gateway';
 
 interface SensorStore {
   // Состояние
@@ -16,6 +18,9 @@ interface SensorStore {
   logs: ActionLog[];
   isLoading: boolean;
   error: string | null;
+  transportType: TransportType;
+  gatewayUrl: string;
+  transport: SensorTransport;
 
   // Действия
   connectToSensor: () => Promise<void>;
@@ -24,6 +29,8 @@ interface SensorStore {
   clearHistory: () => void;
   addLog: (action: string, result: 'success' | 'error', details?: string) => void;
   setError: (error: string | null) => void;
+  setTransportType: (type: TransportType) => void;
+  setGatewayUrl: (url: string) => void;
 }
 
 export const useSensorStore = create<SensorStore>((set, get) => ({
@@ -35,6 +42,9 @@ export const useSensorStore = create<SensorStore>((set, get) => ({
   logs: [],
   isLoading: false,
   error: null,
+  transportType: 'ble',
+  gatewayUrl: 'wss://your-gateway.example.com/ws',
+  transport: new BleTransport(),
 
   // Подключение к датчику
   connectToSensor: async () => {
@@ -47,18 +57,17 @@ export const useSensorStore = create<SensorStore>((set, get) => ({
     });
 
     try {
-      // Подключение к устройству
-      const sensorInfo = await bleDevice.connect();
+      const sensorInfo = await state.transport.connect();
       
       // Настройка обработчиков
-      bleDevice.onData((data) => {
+      state.transport.onData((data) => {
         set(state => ({
           latestData: data,
           dataHistory: [...state.dataHistory, data].slice(-100) // Храним последние 100 записей
         }));
       });
 
-      bleDevice.onDisconnect(() => {
+      state.transport.onDisconnect(() => {
         set({ 
           connectionStatus: ConnectionStatus.DISCONNECTED,
           currentSensor: null
@@ -66,7 +75,7 @@ export const useSensorStore = create<SensorStore>((set, get) => ({
         state.addLog('Отключение', 'success', 'Датчик отключен');
       });
 
-      bleDevice.onError((error) => {
+      state.transport.onError((error) => {
         set({ 
           error: error.message,
           connectionStatus: ConnectionStatus.ERROR 
@@ -75,7 +84,7 @@ export const useSensorStore = create<SensorStore>((set, get) => ({
       });
 
       // Получаем первые данные
-      const initialData = await bleDevice.getAllData();
+      const initialData = await state.transport.getAllData();
 
       set({ 
         currentSensor: sensorInfo,
@@ -106,7 +115,7 @@ export const useSensorStore = create<SensorStore>((set, get) => ({
     const state = get();
     
     try {
-      await bleDevice.disconnect();
+      await state.transport.disconnect();
       
       set({ 
         currentSensor: null,
@@ -127,13 +136,13 @@ export const useSensorStore = create<SensorStore>((set, get) => ({
   refreshData: async () => {
     const state = get();
     
-    if (!bleDevice.isConnected()) {
+    if (!state.transport.isConnected()) {
       state.setError('Датчик не подключен');
       return;
     }
 
     try {
-      const data = await bleDevice.getAllData();
+      const data = await state.transport.getAllData();
       
       set(state => ({
         latestData: data,
@@ -175,6 +184,25 @@ export const useSensorStore = create<SensorStore>((set, get) => ({
   // Установка ошибки
   setError: (error: string | null) => {
     set({ error });
+  },
+
+  setTransportType: (type: TransportType) => {
+    const state = get();
+    let transport: SensorTransport = state.transport;
+    if (type === 'ble') {
+      transport = new BleTransport();
+    } else {
+      transport = new GatewayTransport(state.gatewayUrl);
+    }
+    set({ transportType: type, transport });
+  },
+
+  setGatewayUrl: (url: string) => {
+    const state = get();
+    set({ gatewayUrl: url });
+    if (state.transportType === 'gateway') {
+      set({ transport: new GatewayTransport(url) });
+    }
   }
 }));
 

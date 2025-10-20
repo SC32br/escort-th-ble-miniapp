@@ -46,6 +46,14 @@ class TelegramWebApp {
     }
   }
 
+  openLink(url: string) {
+    if (this.webApp && this.webApp.openLink) {
+      this.webApp.openLink(url, { try_instant_view: false });
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
   close() {
     if (this.webApp && this.webApp.close) {
       this.webApp.close();
