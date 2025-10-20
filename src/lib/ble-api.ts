@@ -50,11 +50,13 @@ export class THBLEDevice {
 
       // Подключение к GATT серверу
       console.log('Подключение к GATT серверу...');
-      this.server = await this.device.gatt?.connect();
+      const server = await this.device.gatt?.connect();
       
-      if (!this.server) {
+      if (!server) {
         throw new Error('Не удалось подключиться к GATT серверу');
       }
+      
+      this.server = server;
 
       // Получение сервиса
       console.log('Получение BLE сервиса...');

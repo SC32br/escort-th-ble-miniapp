@@ -74,8 +74,8 @@ class TelegramWebApp {
   constructor() {
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       this.webApp = window.Telegram.WebApp;
-      this.webApp.ready();
-      this.webApp.expand();
+      this.webApp?.ready();
+      this.webApp?.expand();
     }
   }
 
