@@ -6,63 +6,26 @@ declare global {
   interface Window {
     Telegram?: {
       WebApp: {
-        initData: string;
-        initDataUnsafe: any;
-        version: string;
-        platform: string;
-        colorScheme: 'light' | 'dark';
-        themeParams: {
-          bg_color?: string;
-          text_color?: string;
-          hint_color?: string;
-          link_color?: string;
-          button_color?: string;
-          button_text_color?: string;
-          secondary_bg_color?: string;
-        };
-        isExpanded: boolean;
-        viewportHeight: number;
-        viewportStableHeight: number;
-        headerColor: string;
-        backgroundColor: string;
-        BackButton: {
-          isVisible: boolean;
-          onClick: (callback: () => void) => void;
-          offClick: (callback: () => void) => void;
-          show: () => void;
-          hide: () => void;
-        };
-        MainButton: {
-          text: string;
-          color: string;
-          textColor: string;
-          isVisible: boolean;
-          isActive: boolean;
-          isProgressVisible: boolean;
-          setText: (text: string) => void;
-          onClick: (callback: () => void) => void;
-          offClick: (callback: () => void) => void;
-          show: () => void;
-          hide: () => void;
-          enable: () => void;
-          disable: () => void;
-          showProgress: (leaveActive?: boolean) => void;
-          hideProgress: () => void;
-        };
-        HapticFeedback: {
-          impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
-          notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
-          selectionChanged: () => void;
-        };
         ready: () => void;
         expand: () => void;
         close: () => void;
         showAlert: (message: string, callback?: () => void) => void;
         showConfirm: (message: string, callback?: (confirmed: boolean) => void) => void;
-        showPopup: (params: { message: string; buttons?: any[] }, callback?: (buttonId: string) => void) => void;
-        openLink: (url: string, options?: { try_instant_view?: boolean }) => void;
-        openTelegramLink: (url: string) => void;
-        sendData: (data: string) => void;
+        HapticFeedback: {
+          impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
+          notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
+        };
+        MainButton: {
+          setText: (text: string) => void;
+          onClick: (callback: () => void) => void;
+          show: () => void;
+          hide: () => void;
+        };
+        BackButton: {
+          onClick: (callback: () => void) => void;
+          show: () => void;
+          hide: () => void;
+        };
       };
     };
   }
@@ -83,39 +46,6 @@ class TelegramWebApp {
 
   isAvailable(): boolean {
     return this.webApp !== null;
-  }
-
-  getUserData() {
-    return this.webApp?.initDataUnsafe?.user || null;
-  }
-
-  getColorScheme(): 'light' | 'dark' {
-    return this.webApp?.colorScheme || 'light';
-  }
-
-  getThemeParams() {
-    return this.webApp?.themeParams || {};
-  }
-
-  showMainButton(text: string, onClick: () => void) {
-    if (!this.webApp?.MainButton) return;
-    this.webApp.MainButton.setText(text);
-    this.webApp.MainButton.onClick(onClick);
-    this.webApp.MainButton.show();
-  }
-
-  hideMainButton() {
-    this.webApp?.MainButton.hide();
-  }
-
-  showBackButton(onClick: () => void) {
-    if (!this.webApp?.BackButton) return;
-    this.webApp.BackButton.onClick(onClick);
-    this.webApp.BackButton.show();
-  }
-
-  hideBackButton() {
-    this.webApp?.BackButton.hide();
   }
 
   hapticFeedback(type: 'light' | 'medium' | 'heavy' | 'success' | 'error' | 'warning') {
@@ -145,38 +75,8 @@ class TelegramWebApp {
     }
   }
 
-  openLink(url: string) {
-    if (this.webApp?.openLink) {
-      this.webApp.openLink(url);
-    } else {
-      window.open(url, '_blank');
-    }
-  }
-
-  openTelegramLink(url: string) {
-    if (this.webApp?.openTelegramLink) {
-      this.webApp.openTelegramLink(url);
-    } else {
-      window.open(url, '_blank');
-    }
-  }
-
   close() {
     this.webApp?.close();
-  }
-
-  sendData(data: any) {
-    if (this.webApp?.sendData) {
-      this.webApp.sendData(JSON.stringify(data));
-    }
-  }
-
-  getPlatform(): string {
-    return this.webApp?.platform || 'unknown';
-  }
-
-  getVersion(): string {
-    return this.webApp?.version || '0.0';
   }
 }
 
