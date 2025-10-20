@@ -57,7 +57,7 @@ function App() {
       await connectToSensor();
       telegram.hapticFeedback('success');
     } catch (error) {
-      submit_telegram.hapticFeedback('error');
+      telegram.hapticFeedback('error');
       telegram.showAlert(
         error instanceof Error ? error.message : 'Ошибка подключения к датчику'
       );
