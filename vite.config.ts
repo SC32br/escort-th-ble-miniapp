@@ -14,7 +14,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
-    https: true // Включаем HTTPS для Telegram Web App
+    https: false // Отключаем HTTPS для dev режима
   },
   build: {
     outDir: 'dist',

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TH-BLE Mini App Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; }
+        #logs { background: #f5f5f5; padding: 10px; height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>TH-BLE Mini App - Тестирование</h1>
+    
+    <div class="test-section">
+        <h2>1. Проверка окружения</h2>
+        <div id="env-check"></div>
+        <button onclick="checkEnvironment()">Проверить окружение</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Тест авторизации</h2>
+        <div id="auth-check"></div>
+        <button onclick="testAuth()">Тест авторизации</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Тест WebSocket</h2>
+        <div id="ws-check"></div>
+        <button onclick="testWebSocket()">Тест WebSocket</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Тест BLE (если доступно)</h2>
+        <div id="ble-check"></div>
+        <button onclick="testBLE()">Тест BLE</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Логи</h2>
+        <div id="logs"></div>
+        <button onclick="clearLogs()">Очистить</button>
+    </div>
+
+    <script>
+        let ws = null;
+        
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logs.innerHTML += `<div class="${className}">[${time}] ${message}</div>`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        function checkEnvironment() {
+            const envDiv = document.getElementById('env-check');
+            let results = [];
+            
+            // Проверка Web Bluetooth
+            if (navigator.bluetooth) {
+                results.push('<span class="success">✓ Web Bluetooth API доступен</span>');
+            } else {
+                results.push('<span class="error">✗ Web Bluetooth API недоступен</span>');
+            }
+            
+            // Проверка WebSocket
+            if (window.WebSocket) {
+                results.push('<span class="success">✓ WebSocket API доступен</span>');
+            } else {
+                results.push('<span class="error">✗ WebSocket API недоступен</span>');
+            }
+            
+            // Проверка Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                results.push('<span class="success">✓ Telegram WebApp API доступен</span>');
+                const initData = window.Telegram.WebApp.initData;
+                if (initData) {
+                    results.push(`<span class="info">InitData: ${initData.substring(0, 50)}...</span>`);
+                }
+            } else {
+                results.push('<span class="error">✗ Telegram WebApp API недоступен (тест в браузере)</span>');
+            }
+            
+            envDiv.innerHTML = results.join('<br>');
+            log('Проверка окружения завершена');
+        }
+        
+        async function testAuth() {
+            const authDiv = document.getElementById('auth-check');
+            authDiv.innerHTML = '<span class="info">Тестирование авторизации...</span>';
+            
+            try {
+                // Симуляция initData для тестирования
+                const testInitData = 'user=%7B%22id%22%3A123456%2C%22first_name%22%3A%22Test%22%7D&chat_instance=-123456789&chat_type=sender&auth_date=1234567890&hash=test_hash';
+                
+                const response = await fetch('http://localhost:8080/auth/telegram', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: testInitData })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authDiv.innerHTML = `<span class="success">✓ Авторизация успешна. Токен: ${data.token.substring(0, 20)}...</span>`;
+                    log('Авторизация успешна: ' + data.token.substring(0, 20) + '...');
+                    return data.token;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                authDiv.innerHTML = `<span class="error">✗ Ошибка авторизации: ${error.message}</span>`;
+                log('Ошибка авторизации: ' + error.message, 'error');
+            }
+        }
+        
+        function testWebSocket() {
+            const wsDiv = document.getElementById('ws-check');
+            wsDiv.innerHTML = '<span class="info">Подключение к WebSocket...</span>';
+            
+            try {
+                ws = new WebSocket('ws://localhost:8081?token=test_token');
+                
+                ws.onopen = function() {
+                    wsDiv.innerHTML = '<span class="success">✓ WebSocket подключен</span>';
+                    log('WebSocket подключен');
+                    
+                    // Отправляем тестовые сообщения
+                    ws.send(JSON.stringify({ type: 'hello' }));
+                    ws.send(JSON.stringify({ type: 'connect' }));
+                    ws.send(JSON.stringify({ type: 'ping' }));
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    log('WebSocket сообщение: ' + JSON.stringify(data));
+                };
+                
+                ws.onerror = function(error) {
+                    wsDiv.innerHTML = '<span class="error">✗ Ошибка WebSocket: ' + error + '</span>';
+                    log('Ошибка WebSocket: ' + error, 'error');
+                };
+                
+                ws.onclose = function() {
+                    wsDiv.innerHTML = '<span class="info">WebSocket закрыт</span>';
+                    log('WebSocket закрыт');
+                };
+                
+            } catch (error) {
+                wsDiv.innerHTML = '<span class="error">✗ Ошибка создания WebSocket: ' + error.message + '</span>';
+                log('Ошибка создания WebSocket: ' + error.message, 'error');
+            }
+        }
+        
+        async function testBLE() {
+            const bleDiv = document.getElementById('ble-check');
+            
+            if (!navigator.bluetooth) {
+                bleDiv.innerHTML = '<span class="error">✗ Web Bluetooth API недоступен</span>';
+                return;
+            }
+            
+            bleDiv.innerHTML = '<span class="info">Поиск BLE устройств...</span>';
+            
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: 'TH_' }],
+                    optionalServices: ['6e400001-b5a3-f393-e0a9-e26a39f7c831']
+                });
+                
+                bleDiv.innerHTML = '<span class="success">✓ BLE устройство найдено: ' + device.name + '</span>';
+                log('BLE устройство найдено: ' + device.name);
+                
+            } catch (error) {
+                bleDiv.innerHTML = '<span class="error">✗ Ошибка BLE: ' + error.message + '</span>';
+                log('Ошибка BLE: ' + error.message, 'error');
+            }
+        }
+        
+        // Автозапуск проверки окружения
+        window.onload = function() {
+            checkEnvironment();
+        };
+    </script>
+</body>
+</html>

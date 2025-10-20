@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  # MQTT Broker
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: escort-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
+
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: escort-backend
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN:-YOUR_BOT_TOKEN}
+      - JWT_SECRET=${JWT_SECRET:-change_me_in_production}
+      - MQTT_URL=mqtt://mosquitto:1883
+      - PORT=8080
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  # BLE Gateway (Theengs)
+  ble-gateway:
+    image: theengs/gateway:latest
+    container_name: escort-ble-gateway
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - MQTT_USERNAME=
+      - MQTT_PASSWORD=
+      - MQTT_TOPIC=tele
+    depends_on:
+      - mosquitto
+    privileged: true
+    network_mode: host
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
