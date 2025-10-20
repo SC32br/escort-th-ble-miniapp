@@ -14,11 +14,16 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
-    https: false // Отключаем HTTPS для dev режима
+    https: false
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      }
+    }
   }
 });
 
