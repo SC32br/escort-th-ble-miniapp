@@ -50,7 +50,7 @@ declare global {
           hideProgress: () => void;
         };
         HapticFeedback: {
-          impactOccurred: (style: 'light'三'medium' | 'heavy' | 'rigid' | 'soft') => void;
+          impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
           notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
           selectionChanged: () => void;
         };
@@ -236,4 +236,3 @@ class TelegramWebApp {
 
 // Экспорт синглтона
 export const telegram = new TelegramWebApp();
-
