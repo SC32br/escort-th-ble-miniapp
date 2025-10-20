@@ -263,3 +263,4 @@ MIT License - см. файл LICENSE
 ---
 
 **Сделано с ❤️ для пользователей Escort TH-BLE**
+
