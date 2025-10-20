@@ -81,75 +81,45 @@ class TelegramWebApp {
     }
   }
 
-  /**
-   * Проверка доступности Telegram WebApp API
-   */
   isAvailable(): boolean {
     return this.webApp !== null;
   }
 
-  /**
-   * Получение данных пользователя
-   */
   getUserData() {
     return this.webApp?.initDataUnsafe?.user || null;
   }
 
-  /**
-   * Получение темы
-   */
   getColorScheme(): 'light' | 'dark' {
     return this.webApp?.colorScheme || 'light';
   }
 
-  /**
-   * Получение параметров темы
-   */
   getThemeParams() {
     return this.webApp?.themeParams || {};
   }
 
-  /**
-   * Показать главную кнопку
-   */
   showMainButton(text: string, onClick: () => void) {
     if (!this.webApp?.MainButton) return;
-
     this.webApp.MainButton.setText(text);
     this.webApp.MainButton.onClick(onClick);
     this.webApp.MainButton.show();
   }
 
-  /**
-   * Скрыть главную кнопку
-   */
   hideMainButton() {
     this.webApp?.MainButton.hide();
   }
 
-  /**
-   * Показать кнопку "Назад"
-   */
   showBackButton(onClick: () => void) {
     if (!this.webApp?.BackButton) return;
-
     this.webApp.BackButton.onClick(onClick);
     this.webApp.BackButton.show();
   }
 
-  /**
-   * Скрыть кнопку "Назад"
-   */
   hideBackButton() {
     this.webApp?.BackButton.hide();
   }
 
-  /**
-   * Вибрация (haptic feedback)
-   */
   hapticFeedback(type: 'light' | 'medium' | 'heavy' | 'success' | 'error' | 'warning') {
     if (!this.webApp?.HapticFeedback) return;
-
     if (type === 'success' || type === 'error' || type === 'warning') {
       this.webApp.HapticFeedback.notificationOccurred(type);
     } else {
@@ -157,9 +127,6 @@ class TelegramWebApp {
     }
   }
 
-  /**
-   * Показать алерт
-   */
   showAlert(message: string, callback?: () => void) {
     if (this.webApp?.showAlert) {
       this.webApp.showAlert(message, callback);
@@ -169,9 +136,6 @@ class TelegramWebApp {
     }
   }
 
-  /**
-   * Показать подтверждение
-   */
   showConfirm(message: string, callback?: (confirmed: boolean) => void) {
     if (this.webApp?.showConfirm) {
       this.webApp.showConfirm(message, callback);
@@ -181,9 +145,6 @@ class TelegramWebApp {
     }
   }
 
-  /**
-   * Открыть ссылку
-   */
   openLink(url: string) {
     if (this.webApp?.openLink) {
       this.webApp.openLink(url);
@@ -192,9 +153,6 @@ class TelegramWebApp {
     }
   }
 
-  /**
-   * Открыть Telegram ссылку
-   */
   openTelegramLink(url: string) {
     if (this.webApp?.openTelegramLink) {
       this.webApp.openTelegramLink(url);
@@ -203,36 +161,23 @@ class TelegramWebApp {
     }
   }
 
-  /**
-   * Закрыть приложение
-   */
   close() {
     this.webApp?.close();
   }
 
-  /**
-   * Отправить данные боту
-   */
   sendData(data: any) {
     if (this.webApp?.sendData) {
       this.webApp.sendData(JSON.stringify(data));
     }
   }
 
-  /**
-   * Получение платформы
-   */
   getPlatform(): string {
     return this.webApp?.platform || 'unknown';
   }
 
-  /**
-   * Получение версии
-   */
   getVersion(): string {
     return this.webApp?.version || '0.0';
   }
 }
 
-// Экспорт синглтона
 export const telegram = new TelegramWebApp();
