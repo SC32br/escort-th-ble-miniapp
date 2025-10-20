@@ -50,7 +50,7 @@ declare global {
           hideProgress: () => void;
         };
         HapticFeedback: {
-          impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
+          impactOccurred: (style: 'light'三'medium' | 'heavy' | 'rigid' | 'soft') => void;
           notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
           selectionChanged: () => void;
         };
@@ -74,8 +74,10 @@ class TelegramWebApp {
   constructor() {
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       this.webApp = window.Telegram.WebApp;
-      this.webApp?.ready();
-      this.webApp?.expand();
+      if (this.webApp) {
+        this.webApp.ready();
+        this.webApp.expand();
+      }
     }
   }
 
