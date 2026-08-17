@@ -1,4 +1,4 @@
-# TH-BLE Monitor
+# Escort TH-BLE: Telegram Mini App и Web Bluetooth
 
 Telegram Mini App для мониторинга датчиков температуры и влажности Escort TH-BLE.
 
